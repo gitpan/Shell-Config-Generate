@@ -1,0 +1,28 @@
+---
+abstract: 'Portably generate config for any shell'
+author:
+  - 'Graham Ollis <plicease@cpan.org>'
+build_requires:
+  File::Spec: 0
+  File::Temp: 0
+  FindBin: 0
+  Test::Differences: 0
+  Test::More: 0
+  constant: 0
+configure_requires:
+  ExtUtils::MakeMaker: 6.30
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 4.300028, CPAN::Meta::Converter version 2.120921'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Shell-Config-Generate
+requires:
+  Shell::Guess: 0
+  autodie: 0
+resources:
+  bugtracker: https://github.com/plicease/Shell-Config-Generate/issues
+  homepage: http://search.cpan.org/dist/Shell-Config-Generate/
+  repository: git://github.com/plicease/Shell-Config-Generate.git
+version: 0.02

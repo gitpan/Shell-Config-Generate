@@ -1,0 +1,5 @@
+---
+pod_spelling_system:
+  stopwords:
+    - bourne
+    - cmd.exe
