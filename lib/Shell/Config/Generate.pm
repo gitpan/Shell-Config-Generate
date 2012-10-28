@@ -5,7 +5,7 @@ use warnings;
 use Shell::Guess;
 
 # ABSTRACT: Portably generate config for any shell
-our $VERSION = '0.02'; # VERSION
+our $VERSION = '0.03'; # VERSION
 
 
 sub new
@@ -258,7 +258,7 @@ Shell::Config::Generate - Portably generate config for any shell
 
 =head1 VERSION
 
-version 0.02
+version 0.03
 
 =head1 SYNOPSIS
 
@@ -343,7 +343,7 @@ This will create foo.sh and foo.csh versions of the configurations,
 which can be sourced like so:
 
  #!/bin/sh
- source foo.sh
+ . ./foo.sh
 
 or
 
