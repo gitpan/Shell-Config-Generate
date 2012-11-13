@@ -5,7 +5,7 @@ use warnings;
 use Shell::Guess;
 
 # ABSTRACT: Portably generate config for any shell
-our $VERSION = '0.03'; # VERSION
+our $VERSION = '0.04'; # VERSION
 
 
 sub new
@@ -92,7 +92,7 @@ sub echo_on
 
 sub _value_escape_csh
 {
-  my $value = shift . '';
+  my $value = shift() . '';
   $value =~ s/([\n!])/\\$1/g;
   $value =~ s/(')/'"$1"'/g;
   $value;
@@ -100,14 +100,14 @@ sub _value_escape_csh
 
 sub _value_escape_sh
 {
-  my $value = shift . '';
+  my $value = shift() . '';
   $value =~ s/(')/'"$1"'/g;
   $value;
 }
 
 sub _value_escape_win32
 {
-  my $value = shift . '';
+  my $value = shift() . '';
   $value =~ s/%/%%/g;
   $value =~ s/([&^|<>])/^$1/g;
   $value =~ s/\n/^\n\n/g;
@@ -258,7 +258,7 @@ Shell::Config::Generate - Portably generate config for any shell
 
 =head1 VERSION
 
-version 0.03
+version 0.04
 
 =head1 SYNOPSIS
 
