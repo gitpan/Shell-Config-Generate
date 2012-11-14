@@ -5,7 +5,7 @@ use warnings;
 use Shell::Guess;
 
 # ABSTRACT: Portably generate config for any shell
-our $VERSION = '0.04'; # VERSION
+our $VERSION = '0.05'; # VERSION
 
 
 sub new
@@ -178,7 +178,7 @@ sub generate
       if($shell->is_c)
       {
         my $value = join ':', map { _value_escape_csh($_) } @values;
-        $buffer .= "[ \$?$name = 0 ] && setenv $name '$value' || ";
+        $buffer .= "\\[ \"\$?$name\" = 0 ] && setenv $name '$value' || ";
         if($command eq 'prepend_path')
         { $buffer .= "setenv $name '$value':\"\$$name\"" }
         else
@@ -258,7 +258,7 @@ Shell::Config::Generate - Portably generate config for any shell
 
 =head1 VERSION
 
-version 0.04
+version 0.05
 
 =head1 SYNOPSIS
 
@@ -303,7 +303,7 @@ will generate a config.csh with this:
  # this is my config file
  setenv FOO 'bar';
  setenv PERL5LIB '/foo/bar/lib/perl5:/foo/bar/lib/perl5/perl5/site';
- [ $?PATH = 0 ] && setenv PATH '/foo/bar/bin:/bar/foo/bin' || setenv PATH "$PATH":'/foo/bar/bin:/bar/foo/bin';
+ \[ "$?PATH" = 0 ] && setenv PATH '/foo/bar/bin:/bar/foo/bin' || setenv PATH "$PATH":'/foo/bar/bin:/bar/foo/bin';
 
 and this:
 
@@ -494,6 +494,46 @@ the path.  You can generate configurations for shells which
 are not available (for example C<cmd.exe> configurations from UNIX or
 bourne configurations under windows), but the test suite only tests
 them if they are found during the build of this module.
+
+The incantation for prepending and appending elements to a path
+on csh probably deserve a comment here.  It looks like this:
+
+ \[ "$?PATH" = 0 ] && setenv PATH '/foo/bar/bin:/bar/foo/bin' || setenv PATH "$PATH":'/foo/bar/bin:/bar/foo/bin';
+
+=over 4
+
+=item * one line
+
+The command is all on one line, and doesn't use if, which is 
+probably more clear and ideomatic.  This for example, might 
+make more sense:
+
+ if ( $?PATH == 0 ) then
+   setenv PATH '/foo/bar/bin:/bar/foo/bin' 
+ else
+   setenv PATH "$PATH":'/foo/bar/bin:/bar/foo/bin'
+ endif
+
+However, this only works if the code interpreted using the csh
+C<source> command or is included in a csh script inline.  If you 
+try to invoke this code using csh C<eval> then it will helpfully
+convert it to one line and if does not work under csh in one line.
+
+=item * escaping [
+
+The initial [ is escaped.  This is not necessary in tcsh and newer
+versions of csh.  In older versions of csh, like the one which comes
+with Solaris an unescaped [ confuses either the shell or [ itself.
+
+ % csh
+ % [ "$?PATH" = 0 ] && setenv PATH '/foo/bar/bin:/bar/foo/bin' || setenv PATH "$PATH":'/foo/bar/bin:/bar/foo/bin';
+ Missing ]
+
+44bsd-csh which comes with the FreeBSD ports collection does not 
+have this problem.  The only place I have see it or have been able to
+reproduce it is with the csh that comes with Solaris.
+
+=back
 
 There are probably more clever or prettier ways to 
 append/prepend path environment variables as I am not a shell
