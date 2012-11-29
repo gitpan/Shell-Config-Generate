@@ -5,7 +5,7 @@ use warnings;
 use Shell::Guess;
 
 # ABSTRACT: Portably generate config for any shell
-our $VERSION = '0.05'; # VERSION
+our $VERSION = '0.06'; # VERSION
 
 
 sub new
@@ -159,7 +159,8 @@ sub generate
       elsif($shell->is_bourne)
       {
         $value = _value_escape_sh($value);
-        $buffer .= "export $name='$value';\n";
+        $buffer .= "$name='$value';\n";
+        $buffer .= "export $name;\n";
       }
       elsif($shell->is_cmd || $shell->is_command)
       {
@@ -190,11 +191,11 @@ sub generate
         my $value = join ':', map { _value_escape_sh($_) } @values;
         $buffer .= "if [ -n \"\$$name\" ] ; then\n";
         if($command eq 'prepend_path')
-        { $buffer .= "  export $name='$value':\$$name;\n" }
+        { $buffer .= "  $name='$value':\$$name;\n  export $name;\n" }
         else
-        { $buffer .= "  export $name=\$$name:'$value';\n" }
+        { $buffer .= "  $name=\$$name:'$value';\n  export $name\n" }
         $buffer .= "else\n";
-        $buffer .= "  export $name='$value';\n";
+        $buffer .= "  $name='$value';\n  export $name;\n";
         $buffer .= "fi;\n";
       }
       elsif($shell->is_cmd || $shell->is_command)
@@ -248,7 +249,7 @@ sub generate_file
 
 1;
 
-
+__END__
 
 =pod
 
@@ -258,7 +259,7 @@ Shell::Config::Generate - Portably generate config for any shell
 
 =head1 VERSION
 
-version 0.05
+version 0.06
 
 =head1 SYNOPSIS
 
@@ -286,12 +287,16 @@ This:
 will generate a config.sh file with this:
 
  # this is my config file
- export FOO='bar';
- export PERL5LIB='/foo/bar/lib/perl5:/foo/bar/lib/perl5/perl5/site';
+ FOO='bar';
+ export FOO;
+ PERL5LIB='/foo/bar/lib/perl5:/foo/bar/lib/perl5/perl5/site';
+ export PERL5LIB;
  if [ -n "$PATH" ] ; then
-   export PATH=$PATH:'/foo/bar/bin:/bar/foo/bin';
+   PATH=$PATH:'/foo/bar/bin:/bar/foo/bin';
+   export PATH
  else
-   export PATH='/foo/bar/bin:/bar/foo/bin';
+   PATH='/foo/bar/bin:/bar/foo/bin';
+   export PATH;
  fi;
 
 and this:
@@ -553,7 +558,3 @@ This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
 =cut
-
-
-__END__
-
