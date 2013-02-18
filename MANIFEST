@@ -9,6 +9,7 @@ README
 dist.ini
 example/simple.pl
 lib/Shell/Config/Generate.pm
+t/000.t
 t/append_path.t
 t/comment.t
 t/common.pl

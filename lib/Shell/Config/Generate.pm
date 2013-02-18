@@ -5,7 +5,7 @@ use warnings;
 use Shell::Guess;
 
 # ABSTRACT: Portably generate config for any shell
-our $VERSION = '0.06'; # VERSION
+our $VERSION = '0.06_01'; # VERSION
 
 
 sub new
@@ -259,7 +259,7 @@ Shell::Config::Generate - Portably generate config for any shell
 
 =head1 VERSION
 
-version 0.06
+version 0.06_01
 
 =head1 SYNOPSIS
 
@@ -386,6 +386,8 @@ or
 
  #!/bin/csh
  eval `script.pl`
+
+=head1 CONSTRUCTOR
 
 =head2 Shell::Config::Generate->new
 

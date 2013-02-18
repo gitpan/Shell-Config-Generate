@@ -4,7 +4,7 @@
       "Graham Ollis <plicease@cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 4.300028, CPAN::Meta::Converter version 2.120921",
+   "generated_by" : "Dist::Zilla version 4.300029, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "perl_5"
    ],
@@ -22,7 +22,8 @@
       "runtime" : {
          "requires" : {
             "Shell::Guess" : "0",
-            "autodie" : "0"
+            "autodie" : "0",
+            "perl" : "5.006"
          }
       },
       "test" : {
@@ -36,7 +37,7 @@
          }
       }
    },
-   "release_status" : "stable",
+   "release_status" : "testing",
    "resources" : {
       "bugtracker" : {
          "web" : "https://github.com/plicease/Shell-Config-Generate/issues"
@@ -48,6 +49,6 @@
          "web" : "https://github.com/plicease/Shell-Config-Generate"
       }
    },
-   "version" : "0.06"
+   "version" : "0.06_01"
 }
 
