@@ -30,7 +30,7 @@ my %WriteMakefileArgs = (
     "Shell::Guess" => 0,
     "autodie" => 0
   },
-  "VERSION" => "0.06_02",
+  "VERSION" => "0.06_03",
   "test" => {
     "TESTS" => "t/*.t"
   }
