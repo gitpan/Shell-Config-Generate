@@ -26,4 +26,4 @@ resources:
   bugtracker: https://github.com/plicease/Shell-Config-Generate/issues
   homepage: http://search.cpan.org/dist/Shell-Config-Generate/
   repository: git://github.com/plicease/Shell-Config-Generate.git
-version: 0.06_03
+version: 0.07
