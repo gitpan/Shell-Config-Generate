@@ -2,7 +2,7 @@ NAME
     Shell::Config::Generate - Portably generate config for any shell
 
 VERSION
-    version 0.07_01
+    version 0.08
 
 SYNOPSIS
     With this start up:

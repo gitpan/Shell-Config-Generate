@@ -5,7 +5,7 @@ use warnings;
 use Shell::Guess;
 
 # ABSTRACT: Portably generate config for any shell
-our $VERSION = '0.07_01'; # VERSION
+our $VERSION = '0.08'; # VERSION
 
 
 sub new
@@ -259,7 +259,7 @@ Shell::Config::Generate - Portably generate config for any shell
 
 =head1 VERSION
 
-version 0.07_01
+version 0.08
 
 =head1 SYNOPSIS
 
