@@ -3,9 +3,10 @@ package Shell::Config::Generate;
 use strict;
 use warnings;
 use Shell::Guess;
+use Carp qw( croak );
 
 # ABSTRACT: Portably generate config for any shell
-our $VERSION = '0.08'; # VERSION
+our $VERSION = '0.09'; # VERSION
 
 
 sub new
@@ -98,6 +99,14 @@ sub _value_escape_csh
   $value;
 }
 
+sub _value_escape_fish
+{
+  my $value = shift() . '';
+  $value =~ s/([\n])/\\$1/g;
+  $value =~ s/(')/'"$1"'/g;
+  $value;
+}
+
 sub _value_escape_sh
 {
   my $value = shift() . '';
@@ -112,6 +121,43 @@ sub _value_escape_win32
   $value =~ s/([&^|<>])/^$1/g;
   $value =~ s/\n/^\n\n/g;
   $value;
+}
+
+#   `0  Null
+#   `a  Alert bell/beep
+#   `b  Backspace
+#   `f  Form feed (use with printer output)
+#   `n  New line
+#   `r  Carriage return
+# `r`n  Carriage return + New line
+#   `t  Horizontal tab
+#   `v  Vertical tab (use with printer output)
+
+my %ps = ( # microsoft would have to be different
+  "\0" => '`0',
+  "\a" => '`a',
+  "\b" => '`b',
+  "\f" => '`f',
+  "\r" => '`r',
+  "\n" => '`n',
+  "\t" => '`t',
+  #"\v" => '`v',
+);
+
+sub _value_escape_powershell
+{
+  my $value = shift() . '';
+  $value =~ s/(["'`\$#])/`$1/g;
+  $value =~ s/([\0\a\b\f\r\n\t\v])/$ps{$1}/eg;
+  $value;
+}
+
+
+sub set_alias
+{
+  my($self, $alias, $command) = @_;
+  
+  push @{ $self->{commands} }, ['alias', $alias, $command]; 
 }
 
 
@@ -156,6 +202,11 @@ sub generate
         $value = _value_escape_csh($value);
         $buffer .= "setenv $name '$value';\n";
       }
+      elsif($shell->is_fish)
+      {
+        $value = _value_escape_fish($value);
+        $buffer .= "set -x $name '$value';\n";
+      }
       elsif($shell->is_bourne)
       {
         $value = _value_escape_sh($value);
@@ -167,9 +218,14 @@ sub generate
         $value = _value_escape_win32($value);
         $buffer .= "set $name=$value\n";
       }
+      elsif($shell->is_power)
+      {
+        $value = _value_escape_powershell($value);
+        $buffer .= "\$env:$name = \"$value\"\n";
+      }
       else
       {
-        die 'don\'t know how to "set" with ' . $shell->name;
+        croak 'don\'t know how to "set" with ' . $shell->name;
       }
     }
 
@@ -198,25 +254,47 @@ sub generate
         $buffer .= "  $name='$value';\n  export $name;\n";
         $buffer .= "fi;\n";
       }
-      elsif($shell->is_cmd || $shell->is_command)
+      elsif($shell->is_fish)
       {
-        my $value = join ';', map { _value_escape_win32($_) } @values;
-        $buffer .= "if defined $name (set ";
+        my $value = join ' ', map { _value_escape_fish($_) } @values;
+        $buffer .= "if [ \"\$$name\" == \"\" ]; set -x $name $value; else; ";
         if($command eq 'prepend_path')
-        { $buffer .= "$name=$value;%$name%" }
+        { $buffer .= "set -x $name $value \$$name;" }
         else
-        { $buffer .= "$name=%$name%;$value" }
-        $buffer .=") else (set $name=$value)\n";
+        { $buffer .= "set -x $name \$$name $value;" }
+        $buffer .= "end\n";
+      }
+      elsif($shell->is_cmd || $shell->is_command || $shell->is_power)
+      {
+        my $value = join ';', map { $shell->is_power ? _value_escape_powershell($_) : _value_escape_win32($_) } @values;
+        if($shell->is_power)
+        {
+          $buffer .= "if(\$env:$name) { ";
+          if($command eq 'prepend_path')
+          { $buffer .= "\$env:$name = \"$value;\" + \$env:$name" }
+          else
+          { $buffer .= "\$env:$name = \$env:$name + \";$value\"" }
+          $buffer .= " } else { \$env:$name = \"$value\" }\n";
+        }
+        else
+        {
+          $buffer .= "if defined $name (set ";
+          if($command eq 'prepend_path')
+          { $buffer .= "$name=$value;%$name%" }
+          else
+          { $buffer .= "$name=%$name%;$value" }
+          $buffer .=") else (set $name=$value)\n";
+        }
       }
       else
       {
-        die 'don\'t know how to "append_path" with ' . $shell->name;
+        croak 'don\'t know how to "append_path" with ' . $shell->name;
       }
     }
 
     elsif($command eq 'comment')
     {
-      if($shell->is_unix)
+      if($shell->is_unix || $shell->is_power)
       {
         $buffer .= "# $_\n" for map { split /\n/, } @$args;
       }
@@ -226,7 +304,35 @@ sub generate
       }
       else
       {
-        die 'don\'t know how to "comment" with ' . $shell->name;
+        croak 'don\'t know how to "comment" with ' . $shell->name;
+      }
+    }
+    
+    elsif($command eq 'alias')
+    {
+      if($shell->is_bourne)
+      {
+        $buffer .= "alias $args->[0]=\"$args->[1]\";\n";
+      }
+      elsif($shell->is_c)
+      {
+        $buffer .= "alias $args->[0] $args->[1];\n";
+      }
+      elsif($shell->is_cmd || $shell->is_command)
+      {
+        $buffer .= "DOSKEY $args->[0]=$args->[1] \$*\n";
+      }
+      elsif($shell->is_power)
+      {
+        $buffer .= "function $args->[0] { $args->[1] \$args }\n";
+      }
+      elsif($shell->is_fish)
+      {
+        $buffer .= "alias $args->[0] '$args->[1]';\n";
+      }
+      else
+      {
+        croak 'don\'t know how to "alias" with ' . $shell->name;
       }
     }
   }
@@ -244,14 +350,13 @@ sub generate_file
   close $fh;
 }
 
-# TODO alias
-# TODO PowerShell
-
 1;
 
 __END__
 
 =pod
+
+=encoding UTF-8
 
 =head1 NAME
 
@@ -259,7 +364,7 @@ Shell::Config::Generate - Portably generate config for any shell
 
 =head1 VERSION
 
-version 0.08
+version 0.09
 
 =head1 SYNOPSIS
 
@@ -479,6 +584,21 @@ first line of the config:
 Turn off the echo off (that is do not put anything at the beginning of
 the config) for DOS/Windows configurations (C<command.com> or C<cmd.exe>).
 
+=head2 $config-E<gt>set_alias( $alias => $command )
+
+Sets the given alias to the given command.
+
+Caveat:
+some older shells do not support aliases, such as
+the original bourne shell.  This module will generate
+aliases for those shells anyway, since /bin/sh may
+actually be a more modern shell that DOES support
+aliases, so do not use this method unless you can be
+reasonable sure that the shell you are generating
+supports aliases.  On Windows, for PowerShell, a simple
+function is used instead of an alias so that arguments
+may be specified.
+
 =head2 $config-E<gt>generate( [ $shell ] )
 
 Generate shell configuration code for the given shell.
@@ -538,7 +658,18 @@ There are probably more clever or prettier ways to
 append/prepend path environment variables as I am not a shell
 programmer.  Patches welcome.
 
-Only UNIX and Windows are supported so far.  Patches welcome.
+Only UNIX (bourne, bash, csh, ksh, fish and their derivatives) and
+Windows (command.com, cmd.exe and PowerShell) are supported so far.
+
+Fish shell support should be considered a tech preview.  The Fish
+shell itself is somewhat in flux, and thus some tests are skipped
+for the Fish shell since behavior is different for different versions.
+In particular, new lines in environment variables may not work on
+newer versions.
+
+Patches welcome for your favorite shell / operating system.
+
+=cut
 
 =head1 AUTHOR
 

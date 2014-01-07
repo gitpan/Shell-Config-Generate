@@ -13,6 +13,7 @@ my $sep = $^O eq 'MSWin32' ? ';' : ':';
 sub main::find_shell
 {
   my $shell = shift;
+  #return if $shell eq 'powershell.exe' && $^O eq 'cygwin';
   return $shell if $shell eq 'cmd.exe' && $^O eq 'MSWin32' && Win32::IsWinNT();
   return $shell if $shell eq 'command.com' && $^O eq 'MSWin32';
   foreach my $path (split $sep, $ENV{PATH})
@@ -47,17 +48,19 @@ sub main::tempdir
 }
 
 my %shell = (
-  tcsh          => 'tc_shell',
-  csh           => 'c_shell',
-  'bsd-csh'     => 'c_shell',
-  bash          => 'bash_shell',
-  sh            => 'bourne_shell',
-  zsh           => 'z_shell',
-  'command.com' => 'command_shell',
-  'cmd.exe'     => 'cmd_shell',
-  ksh           => 'korn_shell',
-  '44bsd-csh'   => 'c_shell',
-  jsh           => 'bourne_shell',
+  tcsh             => 'tc_shell',
+  csh              => 'c_shell',
+  'bsd-csh'        => 'c_shell',
+  bash             => 'bash_shell',
+  sh               => 'bourne_shell',
+  zsh              => 'z_shell',
+  'command.com'    => 'command_shell',
+  'cmd.exe'        => 'cmd_shell',
+  ksh              => 'korn_shell',
+  '44bsd-csh'      => 'c_shell',
+  jsh              => 'bourne_shell',
+  'powershell.exe' => 'power_shell',
+  'fish'           => 'fish_shell',
 );
 
 sub get_guess
@@ -75,26 +78,53 @@ sub main::get_env
   my $fn = 'foo';
   $fn .= ".bat" if $shell->is_command;
   $fn .= ".cmd" if $shell->is_cmd;
+  $fn .= ".ps1" if $shell->is_power;
   $fn = File::Spec->catfile($dir, $fn);
   unlink $fn if -e $fn;
   do {
     open(my $fh, '>', $fn) || die "unable to write to $fn $!";
     print $fh "#!$shell_path\n" if $shell->is_unix;
     print $fh "\@echo off\n" if $shell->is_command || $shell->is_cmd;
+    print $fh "shopt -s expand_aliases\n" if $shell_path =~  /bash(.exe)?$/;
     eval { print $fh $config->generate($shell) };
     diag $@ if $@;
-    my $perl_exe = $^X;
-    $perl_exe = Cygwin::posix_to_win_path($perl_exe)
-      if $^O eq 'cygwin' && $fn =~ /\.(bat|cmd)$/;
-    print $fh "$perl_exe ", File::Spec->catfile($dir, 'dump.pl'), "\n";
-    close $fn;
+    if(@_)
+    {
+      print $fh "$_\n" for @_;
+    }
+    else
+    {
+      my $perl_exe = $^X;
+      $perl_exe = Cygwin::posix_to_win_path($perl_exe)
+        if $^O eq 'cygwin' && $fn =~ /\.(bat|cmd|ps1)$/;
+      print $fh "$perl_exe ", File::Spec->catfile($dir, 'dump.pl'), "\n";
+      close $fn;
+    }
+    print $fh "exit\n" if $shell->is_power;
   };
   
   chmod 0700, $fn;
 
   my $VAR1;
-  my $output = $shell->is_unix ? `$shell_path $fn` : `$fn`;
-
+  my $output;
+  if($shell->is_unix)
+  {
+    #diag `cat $fn`;
+    $output = `$shell_path $fn`;
+  }
+  elsif($shell->is_power)
+  {
+    #diag `cat $fn`;
+    my $fn2 = $fn;
+    $fn2 = Cygwin::posix_to_win_path($fn) if $^O eq 'cygwin';
+    $fn2 =~ s{\\}{/}g;
+    $output = `$shell_path -ExecutionPolicy RemoteSigned -InputFormat none -NoProfile -File $fn2`;
+  }
+  else
+  {
+    $output = `$fn`;
+  }
+  
   my $fail = 0;  
   if ($? == -1)
   {
@@ -120,6 +150,21 @@ sub main::get_env
   eval $output;
   
   return $VAR1;
+}
+
+sub main::bad_fish
+{
+  my $path = shift;
+  my $dir = File::Spec->catdir(tempdir( CLEANUP => 1 ), qw( one two three ));
+  
+  require IPC::Open3;
+  my $pid = IPC::Open3::open3(\*IN, \*OUT, \*ERR, $path, -c => "setenv PATH \$PATH $dir");
+  waitpid $pid, $?;
+  
+  my $str = do { local $/; <ERR> };
+  #diag "str = \"$str\"";
+  
+  $? != 0;
 }
 
 1;

@@ -3,7 +3,9 @@ use warnings;
 use File::Spec;
 use Test::More tests => 1;
 
-diag "info";
+diag '';
+diag '';
+diag '';
 
 my $found_square_bracket = 0;
 my $found_test = 0;
@@ -24,7 +26,7 @@ foreach my $path (split(($^O eq 'MSWin32' ? ';' : ':'), $ENV{PATH}))
     $found_test = 1;
   }
   
-  foreach my $shell (qw( tcsh csh bash sh zsh command.com cmd.exe ksh 44bsd-csh jsh ))
+  foreach my $shell (qw( tcsh csh bash sh zsh command.com cmd.exe ksh 44bsd-csh jsh powershell.exe fish ))
   {
     if(-x File::Spec->catfile($path, $shell))
     {
@@ -42,5 +44,9 @@ unless($found_test)
 {
   diag "DID NOT FIND test, CSH TEST WILL LIKELY FAIL";
 }
+
+diag '';
+diag '';
+diag '';
 
 pass 'okay';
