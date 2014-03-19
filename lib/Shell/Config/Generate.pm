@@ -6,7 +6,7 @@ use Shell::Guess;
 use Carp qw( croak );
 
 # ABSTRACT: Portably generate config for any shell
-our $VERSION = '0.10'; # VERSION
+our $VERSION = '0.11'; # VERSION
 
 
 sub new
@@ -148,7 +148,7 @@ sub _value_escape_powershell
 {
   my $value = shift() . '';
   $value =~ s/(["'`\$#])/`$1/g;
-  $value =~ s/([\0\a\b\f\r\n\t\v])/$ps{$1}/eg;
+  $value =~ s/([\0\a\b\f\r\n\t])/$ps{$1}/eg;
   $value;
 }
 
@@ -364,7 +364,7 @@ Shell::Config::Generate - Portably generate config for any shell
 
 =head1 VERSION
 
-version 0.10
+version 0.11
 
 =head1 SYNOPSIS
 

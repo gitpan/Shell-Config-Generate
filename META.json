@@ -23,7 +23,7 @@
          "requires" : {
             "Shell::Guess" : "0.02",
             "autodie" : "0",
-            "perl" : "5.009005"
+            "perl" : "5.006"
          }
       },
       "test" : {
@@ -49,6 +49,6 @@
          "web" : "https://github.com/plicease/shell-config-generate"
       }
    },
-   "version" : "0.10"
+   "version" : "0.11"
 }
 

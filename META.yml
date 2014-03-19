@@ -21,9 +21,9 @@ name: Shell-Config-Generate
 requires:
   Shell::Guess: '0.02'
   autodie: '0'
-  perl: '5.009005'
+  perl: '5.006'
 resources:
   bugtracker: https://github.com/plicease/shell-config-generate/issues
   homepage: http://perl.wdlabs.com/Shell-Config-Generate/
   repository: git://github.com/plicease/shell-config-generate.git
-version: '0.10'
+version: '0.11'
