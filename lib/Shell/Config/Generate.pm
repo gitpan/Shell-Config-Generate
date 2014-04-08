@@ -6,7 +6,7 @@ use Shell::Guess;
 use Carp qw( croak );
 
 # ABSTRACT: Portably generate config for any shell
-our $VERSION = '0.11'; # VERSION
+our $VERSION = '0.12'; # VERSION
 
 
 sub new
@@ -364,7 +364,7 @@ Shell::Config::Generate - Portably generate config for any shell
 
 =head1 VERSION
 
-version 0.11
+version 0.12
 
 =head1 SYNOPSIS
 
