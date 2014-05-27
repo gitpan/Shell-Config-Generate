@@ -26,6 +26,7 @@
       },
       "runtime" : {
          "requires" : {
+            "Exporter" : "0",
             "Shell::Guess" : "0.02",
             "autodie" : "0",
             "perl" : "5.006"
@@ -54,6 +55,6 @@
          "web" : "https://github.com/plicease/shell-config-generate"
       }
    },
-   "version" : "0.14"
+   "version" : "0.15"
 }
 

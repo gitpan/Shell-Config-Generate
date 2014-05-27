@@ -18,12 +18,13 @@ my %module_build_args = (
     "Graham Ollis <plicease\@cpan.org>"
   ],
   "dist_name" => "Shell-Config-Generate",
-  "dist_version" => "0.14",
+  "dist_version" => "0.15",
   "license" => "perl",
   "module_name" => "Shell::Config::Generate",
   "recommends" => {},
   "recursive_test_files" => 1,
   "requires" => {
+    "Exporter" => 0,
     "Shell::Guess" => "0.02",
     "autodie" => 0,
     "perl" => "5.006"

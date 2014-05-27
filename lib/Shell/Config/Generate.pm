@@ -7,7 +7,7 @@ use Carp qw( croak );
 use Exporter ();
 
 # ABSTRACT: Portably generate config for any shell
-our $VERSION = '0.14'; # VERSION
+our $VERSION = '0.15'; # VERSION
 
 
 sub new
@@ -362,8 +362,7 @@ our @EXPORT_OK = qw( win32_space_be_gone );
 sub win32_space_be_gone
 {
   return @_ if $^O !~ /^(MSWin32|cygwin)$/;
-  require Config;
-  map { _win_to_posix_path(Win32::GetShortPathName(_posix_to_win_path($_))) } @_;
+  map { /\s/ ? _win_to_posix_path(Win32::GetShortPathName(_posix_to_win_path($_))) : $_ } @_;
 }
 
 1;
@@ -380,7 +379,7 @@ Shell::Config::Generate - Portably generate config for any shell
 
 =head1 VERSION
 
-version 0.14
+version 0.15
 
 =head1 SYNOPSIS
 
