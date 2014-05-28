@@ -18,7 +18,7 @@ my %module_build_args = (
     "Graham Ollis <plicease\@cpan.org>"
   ],
   "dist_name" => "Shell-Config-Generate",
-  "dist_version" => "0.15",
+  "dist_version" => "0.16",
   "license" => "perl",
   "module_name" => "Shell::Config::Generate",
   "recommends" => {},
