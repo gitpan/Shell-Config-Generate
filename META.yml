@@ -28,4 +28,4 @@ resources:
   bugtracker: https://github.com/plicease/shell-config-generate/issues
   homepage: http://perl.wdlabs.com/Shell-Config-Generate/
   repository: git://github.com/plicease/shell-config-generate.git
-version: '0.16'
+version: '0.17'

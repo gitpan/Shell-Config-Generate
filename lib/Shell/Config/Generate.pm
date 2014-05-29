@@ -7,7 +7,7 @@ use Carp qw( croak );
 use Exporter ();
 
 # ABSTRACT: Portably generate config for any shell
-our $VERSION = '0.16'; # VERSION
+our $VERSION = '0.17'; # VERSION
 
 
 sub new
@@ -162,6 +162,13 @@ sub set_alias
 }
 
 
+sub set_path_sep
+{
+  my($self, $sep) = @_;
+  push @{ $self->{commands} }, ['set_path_sep', $sep];
+}
+
+
 sub generate
 {
   my($self, $shell) = @_;
@@ -169,6 +176,7 @@ sub generate
   $shell ||= Shell::Guess->running_shell;
   
   my $buffer = '';
+  my $sep    = $shell->is_win32 ? ';' : ':';
 
   if(exists $self->{shebang} && $shell->is_unix)
   {
@@ -187,12 +195,18 @@ sub generate
   {
     my $command = shift @$args;
 
+    if($command eq 'set_path_sep')
+    {
+      $sep = shift @$args;
+      next;
+    }
+    
     # rewrite set_path as set
     if($command eq 'set_path')
     {
       $command = 'set';
       my $name = shift @$args;
-      $args = [$name, join $shell->is_win32 ? ';' : ':', @$args];
+      $args = [$name, join $sep, @$args];
     }
 
     if($command eq 'set')
@@ -235,22 +249,22 @@ sub generate
       my($name, @values) = @$args;
       if($shell->is_c)
       {
-        my $value = join ':', map { _value_escape_csh($_) } @values;
+        my $value = join $sep, map { _value_escape_csh($_) } @values;
         $buffer .= "test \"\$?$name\" = 0 && setenv $name '$value' || ";
         if($command eq 'prepend_path')
-        { $buffer .= "setenv $name '$value':\"\$$name\"" }
+        { $buffer .= "setenv $name '$value$sep'\"\$$name\"" }
         else
-        { $buffer .= "setenv $name \"\$$name\":'$value'" }
+        { $buffer .= "setenv $name \"\$$name\"'$sep$value'" }
         $buffer .= ";\n";
       }
       elsif($shell->is_bourne)
       {
-        my $value = join ':', map { _value_escape_sh($_) } @values;
+        my $value = join $sep, map { _value_escape_sh($_) } @values;
         $buffer .= "if [ -n \"\$$name\" ] ; then\n";
         if($command eq 'prepend_path')
-        { $buffer .= "  $name='$value':\$$name;\n  export $name;\n" }
+        { $buffer .= "  $name='$value$sep'\$$name;\n  export $name;\n" }
         else
-        { $buffer .= "  $name=\$$name:'$value';\n  export $name\n" }
+        { $buffer .= "  $name=\$$name'$sep$value';\n  export $name\n" }
         $buffer .= "else\n";
         $buffer .= "  $name='$value';\n  export $name;\n";
         $buffer .= "fi;\n";
@@ -267,23 +281,23 @@ sub generate
       }
       elsif($shell->is_cmd || $shell->is_command || $shell->is_power)
       {
-        my $value = join ';', map { $shell->is_power ? _value_escape_powershell($_) : _value_escape_win32($_) } @values;
+        my $value = join $sep, map { $shell->is_power ? _value_escape_powershell($_) : _value_escape_win32($_) } @values;
         if($shell->is_power)
         {
           $buffer .= "if(\$env:$name) { ";
           if($command eq 'prepend_path')
-          { $buffer .= "\$env:$name = \"$value;\" + \$env:$name" }
+          { $buffer .= "\$env:$name = \"$value$sep\" + \$env:$name" }
           else
-          { $buffer .= "\$env:$name = \$env:$name + \";$value\"" }
+          { $buffer .= "\$env:$name = \$env:$name + \"$sep$value\"" }
           $buffer .= " } else { \$env:$name = \"$value\" }\n";
         }
         else
         {
           $buffer .= "if defined $name (set ";
           if($command eq 'prepend_path')
-          { $buffer .= "$name=$value;%$name%" }
+          { $buffer .= "$name=$value$sep%$name%" }
           else
-          { $buffer .= "$name=%$name%;$value" }
+          { $buffer .= "$name=%$name%$sep$value" }
           $buffer .=") else (set $name=$value)\n";
         }
       }
@@ -379,7 +393,7 @@ Shell::Config::Generate - Portably generate config for any shell
 
 =head1 VERSION
 
-version 0.16
+version 0.17
 
 =head1 SYNOPSIS
 
@@ -613,6 +627,15 @@ reasonable sure that the shell you are generating
 supports aliases.  On Windows, for PowerShell, a simple
 function is used instead of an alias so that arguments
 may be specified.
+
+=head2 $config-E<gt>set_path_sep( $sep )
+
+Use C<$sep> as the path separator instead of the shell
+default path separator (generally C<:> for Unix shells 
+and C<;> for Windows shells).
+
+Not all characters are supported, it is usually best
+to stick with the shell default or to use C<:> or C<;>.
 
 =head2 $config-E<gt>generate( [ $shell ] )
 
